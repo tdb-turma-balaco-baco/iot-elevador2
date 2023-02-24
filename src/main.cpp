@@ -1,39 +1,23 @@
 #include <Arduino.h>
 #include <Stepper.h>
-
+#include <LiquidCrystal.h>
+ 
 #define LED_01 12
 #define LED_02 13
 
-#define BUTTON_1 7
-#define BUTTON_2 6
-
-const int stepsPerRevolution = 65; 
+const int stepsPerRevolution = 70; 
 int andarAtual = 1;
-Stepper myStepper(stepsPerRevolution, 8,10,9,11);
+Stepper myStepper(stepsPerRevolution, 22,23,24,25);
 
-
-void movimentarMotor(int passos){
-   for(int i = 0; i < 150; i++){ 
+void movimentarMotor(int passos, int voltas){
+   for(int i = 0; i < voltas; i++){ 
       myStepper.step(passos);
    }
-}
-
-bool acionadoBotaoPrimeiroAndar(){
-   return digitalRead(BUTTON_1) == LOW;
-}
-
-bool acionadoBotaoSegundoAndar(){
-   return digitalRead(BUTTON_2) == LOW;
 }
 
 void iniciarLeds(){
    pinMode(LED_01, OUTPUT);
    pinMode(LED_02, OUTPUT);
-}
-
-void iniciarBotoes(){
-     pinMode(BUTTON_1, INPUT_PULLUP);
-     pinMode(BUTTON_2, INPUT_PULLUP);
 }
 
 void ledSegundoAndar(){
@@ -47,34 +31,44 @@ void ledPrimeiroAndar(){
 }
 
 void descerEvelador(){
-   movimentarMotor(stepsPerRevolution);
+   movimentarMotor(-stepsPerRevolution, 60);
    andarAtual = 1;
+   Serial.println("Voce chegou no PRIMEIRO ANDAR");
    ledPrimeiroAndar();
 }
 
 void subirElevador(){
-   movimentarMotor(-stepsPerRevolution);
+   movimentarMotor(+stepsPerRevolution, 50);
    andarAtual = 2;
+   Serial.println("Voce chegou no SEGUNDO ANDAR");
    ledSegundoAndar();
 }
 
  
 void setup(){
-  myStepper.setSpeed(300); //VELOCIDADE DO MOTOR
+  Serial.begin(9600);
   iniciarLeds();
-  iniciarBotoes();
-  andarAtual = 1;
   ledPrimeiroAndar();
-
+  myStepper.setSpeed(300);
 }
 void loop(){
-   if (acionadoBotaoPrimeiroAndar() && andarAtual == 2)
+   while (Serial.available() > 0)
    {
-      descerEvelador();
-   }   
+    Serial.println("Qual andar deseja ir?");
 
-   if (acionadoBotaoSegundoAndar() && andarAtual == 1)
-   {
-      subirElevador();
-   }   
+    int andarEscolhido = Serial.parseInt();
+
+    if (andarAtual == 2 && andarEscolhido == 1)
+    {
+        descerEvelador();
+    }   
+
+    else if (andarAtual == 1 && andarEscolhido == 2)
+    {
+        subirElevador();
+    }   
+    else {
+      Serial.println("Voce ja esta no " + andarEscolhido);
+    }
+  }
 }
